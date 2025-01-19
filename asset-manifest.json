@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/thirty-six/static/css/main.611555c6.css",
+    "main.js": "/thirty-six/static/js/main.44d876e3.js",
+    "static/media/resource-2.png": "/thirty-six/static/media/resource-2.6986f3f6daf0ed9cbdd9.png",
+    "static/media/resource-6.png": "/thirty-six/static/media/resource-6.f8a049dfbf7b84f20297.png",
+    "static/media/resource-1.png": "/thirty-six/static/media/resource-1.4957903cb91deca5e24e.png",
+    "index.html": "/thirty-six/index.html",
+    "main.611555c6.css.map": "/thirty-six/static/css/main.611555c6.css.map",
+    "main.44d876e3.js.map": "/thirty-six/static/js/main.44d876e3.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.611555c6.css",
+    "static/js/main.44d876e3.js"
+  ]
+}
