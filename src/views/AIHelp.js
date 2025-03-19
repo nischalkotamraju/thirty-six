@@ -1,18 +1,21 @@
 import React, { useState } from "react";
 import OpenAI from "openai";
+import { db, auth } from "../firebase/firebase-config";
+import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 
 const AIHelp = () => {
     const [question, setQuestion] = useState("");
     const [response, setResponse] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
 
     const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
-    
+
     if (!apiKey) {
         console.error("API key is missing. Please set REACT_APP_OPENAI_API_KEY in your environment variables.");
     }
-    
+
     const openai = new OpenAI({
         apiKey,
         dangerouslyAllowBrowser: true,
@@ -22,6 +25,7 @@ const AIHelp = () => {
         setLoading(true);
         setError("");
         setResponse("");
+        setSuccess("");
 
         try {
             const chatResponse = await openai.chat.completions.create({
@@ -29,7 +33,9 @@ const AIHelp = () => {
                 messages: [
                     {
                         role: "system",
-                        content: `You are an ACT expert chatbot. You can only answer ACT-related questions. If a user asks a question unrelated to the ACT, respond with "Sorry, I can't assist with that."`,
+                        content: `You are an ACT expert chatbot. You can answer ACT-related questions and also help users add practice test scores to their database. 
+                        If a user provides practice test scores in the format "Math: [score], English: [score], Reading: [score], Writing: [score], Overall: [score]", validate the scores and respond with "Scores added successfully!" if valid. 
+                        If the scores are invalid, respond with "Invalid scores. Please ensure all scores are between 0 and 36 (Writing: 0-12)."`,
                     },
                     {
                         role: "user",
@@ -40,7 +46,16 @@ const AIHelp = () => {
             });
 
             if (chatResponse && chatResponse.choices && chatResponse.choices.length > 0) {
-                setResponse(chatResponse.choices[0].message.content.trim());
+                const aiResponse = chatResponse.choices[0].message.content.trim();
+                setResponse(aiResponse);
+
+                // Check if the AI response indicates valid scores
+                if (aiResponse === "Scores added successfully!") {
+                    await addPracticeTestToDB(question);
+                    setSuccess("Practice test added successfully!");
+                } else if (aiResponse.startsWith("Invalid scores")) {
+                    setError(aiResponse);
+                }
             } else {
                 setError("Failed to get a response. Please try again.");
             }
@@ -49,6 +64,40 @@ const AIHelp = () => {
             console.error("Error fetching response:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const addPracticeTestToDB = async (input) => {
+        try {
+            // Extract scores from the input
+            const scores = input.match(/Math: (\d+), English: (\d+), Reading: (\d+), Writing: (\d+), Overall: (\d+)/);
+            if (!scores) {
+                throw new Error("Invalid input format for practice test scores.");
+            }
+
+            const [_, math, english, reading, writing, overall] = scores.map(Number);
+
+            const user = auth.currentUser;
+            if (user) {
+                const userRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userRef);
+                const totalPracticeTests = userDoc.data().practiceSessions.totalPracticeSessions || 0;
+
+                await updateDoc(userRef, {
+                    "practiceSessions.practiceSessionList": arrayUnion({
+                        math,
+                        english,
+                        reading,
+                        writing,
+                        overall,
+                        date: new Date().toISOString(),
+                    }),
+                    "practiceSessions.totalPracticeSessions": totalPracticeTests + 1,
+                });
+            }
+        } catch (err) {
+            console.error("Error adding practice test to DB:", err);
+            setError("Failed to add practice test to the database.");
         }
     };
 
@@ -62,7 +111,7 @@ const AIHelp = () => {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     className="w-full h-32 p-4 bg-neutral-800 text-white rounded-lg mb-4"
-                    placeholder="Ask your ACT-related question here..."
+                    placeholder="Ask your ACT-related question here or provide practice test scores..."
                 />
                 <button
                     onClick={handleQuestionSubmit}
@@ -75,6 +124,11 @@ const AIHelp = () => {
                     <div className="mt-4 p-4 bg-neutral-800 text-gray-300 rounded-lg">
                         <h3 className="text-xl font-semibold mb-2">Response:</h3>
                         <p>{response}</p>
+                    </div>
+                )}
+                {success && (
+                    <div className="mt-4 p-3 bg-green-500/20 border border-green-500 rounded-lg text-green-500 text-sm">
+                        {success}
                     </div>
                 )}
                 {error && (
