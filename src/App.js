@@ -11,6 +11,7 @@ import Error from "./views/Error";
 import DescriptionACT from "./views/DescriptionACT";
 import ForgotPassword from "./views/ForgotPassword";
 import Profile from "./views/Profile";
+import AIHelp from "./views/AIHelp";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -56,6 +57,10 @@ function App() {
           <Route 
             path='/practice' 
             element={user ? <Practice /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path='/ai-help' 
+            element={user ? <AIHelp /> : <Navigate to="/login" />} 
           />
           <Route 
             path='/profile' 

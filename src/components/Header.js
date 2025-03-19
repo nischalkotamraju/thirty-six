@@ -16,6 +16,7 @@ import { doc, getDoc } from "firebase/firestore";
 const navigation = [
   { name: "Home", href: "/" },
   { name: "Practice", href: "/practice" },
+  { name: "AI Help", href: "/ai-help" },
   { name: "The ACT", href: "/act-description" },
 ];
 
