@@ -74,15 +74,15 @@ const AIHelp = () => {
             if (!scores) {
                 throw new Error("Invalid input format for practice test scores.");
             }
-
-            const [_, math, english, reading, writing, overall] = scores.map(Number);
-
+    
+            const [math, english, reading, writing, overall] = scores.slice(1).map(Number);
+    
             const user = auth.currentUser;
             if (user) {
                 const userRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userRef);
                 const totalPracticeTests = userDoc.data().practiceSessions.totalPracticeSessions || 0;
-
+    
                 await updateDoc(userRef, {
                     "practiceSessions.practiceSessionList": arrayUnion({
                         math,
@@ -100,6 +100,7 @@ const AIHelp = () => {
             setError("Failed to add practice test to the database.");
         }
     };
+    
 
     return (
         <div className="bg-neutral-900 min-h-screen text-white flex items-center justify-center">
